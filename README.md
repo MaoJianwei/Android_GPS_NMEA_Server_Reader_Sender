@@ -4,7 +4,7 @@
 
 #### GPS Client(uCenter, etc.) connect to our android project(Android_GPS_NMEA_Server_Reader_Sender)
 
-#### Connect at \<android-ip\>:\<NMEA-server-port\>, NMEA messages will be sent immediately and directly.
+#### Use TCP connect to \<android-ip\>:\<NMEA-server-port\>, NMEA messages will be sent immediately and directly.
 
 #### Temporarily, \<NMEA-server-port\> is 8888
 
