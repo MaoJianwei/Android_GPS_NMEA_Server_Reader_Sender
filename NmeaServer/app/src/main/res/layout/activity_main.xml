@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_main"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingBottom="@dimen/activity_horizontal_margin"
+    tools:context="win.maojianwei.nmea.nmeaserver.MainActivity">
+
+    <TextView
+        android:text="NMEA Message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/nmeaText"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/logText" />
+
+    <TextView
+        android:text="@string/mao_name"
+        android:layout_width="wrap_content"
+        android:id="@+id/logText"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_height="100dp"
+        android:layout_toStartOf="@+id/OutputSwitch"
+        android:layout_toLeftOf="@+id/OutputSwitch" />
+
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/OutputSwitch"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:layout_above="@+id/nmeaText"
+        android:showText="false"
+        android:splitTrack="false"
+        android:switchMinWidth="60dip"
+        android:checked="true" />
+
+</RelativeLayout>
