@@ -35,6 +35,8 @@ import java.util.concurrent.TimeUnit;
 import win.maojianwei.nmea.nmeaserver.R;
 
 import static android.location.GpsStatus.GPS_EVENT_SATELLITE_STATUS;
+import static android.widget.Toast.LENGTH_LONG;
+import static android.widget.Toast.LENGTH_SHORT;
 import static maojianwei.nmea.server.MaoNmeaTools.ACTIVITY_LOCATION_SOURCE_SETTINGS;
 import static maojianwei.nmea.server.MaoNmeaTools.CheckEnableGpsDevice;
 import static maojianwei.nmea.server.MaoNmeaTools.CheckGPSLocationProviderEnable;
@@ -48,8 +50,10 @@ import static maojianwei.nmea.server.MaoNmeaTools.EnableGpsDevice;
 import static maojianwei.nmea.server.MaoNmeaTools.GenerateNmeaWithBeidou;
 import static maojianwei.nmea.server.MaoNmeaTools.MaoNmeaSendMessage_Close;
 import static maojianwei.nmea.server.MaoNmeaTools.MaoNmeaSendMessage_write_flush;
+import static maojianwei.nmea.server.MaoNmeaTools.Need_Permission_ACCESS_FINE_LOCATION;
 import static maojianwei.nmea.server.MaoNmeaTools.No_Permission_ACCESS_FINE_LOCATION;
 import static maojianwei.nmea.server.MaoNmeaTools.PERMISSION_ACCESS_FINE_LOCATION;
+import static maojianwei.nmea.server.MaoNmeaTools.Restart_Permission_ACCESS_FINE_LOCATION;
 import static maojianwei.nmea.server.MaoNmeaTools.SingleEnter;
 import static maojianwei.nmea.server.MaoNmeaTools.calSatelliteUseInFix;
 import static maojianwei.nmea.server.MaoNmeaTools.convertNmeaGGA;
@@ -62,6 +66,8 @@ import static maojianwei.nmea.server.MaoNmeaTools.convertNmeaVTG;
 public class MainActivity extends Activity {
 
     private static final int GPS_PORT = 8888;
+    private static final int PERMISSION_REQUEST_CODE = 940110;
+
 
     private LocationManager mLocationManager;
     private MaoGpsListener maoGpsListener;
@@ -92,6 +98,8 @@ public class MainActivity extends Activity {
 
         this.activityContext = this;
 
+        checkAndroidPermission();
+
         this.logView = ((TextView) findViewById(R.id.logText));
         this.logView.setOnClickListener(new OnClickListener() {
             @Override
@@ -105,7 +113,7 @@ public class MainActivity extends Activity {
             public void onClick(View v) {
                 ClipboardManager clipboardManager = (ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
                 clipboardManager.setPrimaryClip(ClipData.newPlainText(ClipboardLabel, nmeaView.getText()));
-                Toast.makeText(activityContext, CopyToClipboard, Toast.LENGTH_SHORT).show();
+                Toast.makeText(activityContext, CopyToClipboard, LENGTH_SHORT).show();
             }
         });
         this.outputSwitch = ((Switch) findViewById(R.id.OutputSwitch));
@@ -129,6 +137,27 @@ public class MainActivity extends Activity {
         onCreateLocation();
         checkEnableGpsDevice();
         createNmeaServer();
+    }
+
+    @TargetApi(23)
+    private void checkAndroidPermission(){
+        if (Build.VERSION.SDK_INT >= 23) {
+            if (PackageManager.PERMISSION_GRANTED != checkCallingOrSelfPermission(PERMISSION_ACCESS_FINE_LOCATION)) {
+                requestPermissions(new String[]{PERMISSION_ACCESS_FINE_LOCATION}, PERMISSION_REQUEST_CODE);
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        switch (requestCode){
+            case PERMISSION_REQUEST_CODE:
+                if(grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    Toast.makeText(activityContext, Restart_Permission_ACCESS_FINE_LOCATION, LENGTH_LONG).show();
+                }else{
+                    Toast.makeText(activityContext, Need_Permission_ACCESS_FINE_LOCATION, LENGTH_LONG).show();
+                }
+        }
     }
 
     protected void onCreateLocation() {

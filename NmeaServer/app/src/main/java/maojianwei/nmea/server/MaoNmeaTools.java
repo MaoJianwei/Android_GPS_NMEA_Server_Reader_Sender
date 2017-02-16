@@ -31,6 +31,8 @@ public class MaoNmeaTools {
     public static final String CheckGPSLocationProviderEnable = "checkGPSLocationProviderEnable: ";
     public static final String CheckEnableGpsDevice = "checkEnableGpsDevice: ";
     public static final String No_Permission_ACCESS_FINE_LOCATION = "not have permission ACCESS_FINE_LOCATION !!!";
+    public static final String Need_Permission_ACCESS_FINE_LOCATION = "We need to access GPS information :)";
+    public static final String Restart_Permission_ACCESS_FINE_LOCATION = "Please restart our App :)";
     public static final String CopyToClipboard = "Copy Mao NMEA messages to clipboard";
     public static final String ClipboardLabel = "Mao_NMEA_Server";
 
