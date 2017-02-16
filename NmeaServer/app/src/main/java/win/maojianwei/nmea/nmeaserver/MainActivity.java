@@ -2,6 +2,8 @@ package win.maojianwei.nmea.nmeaserver;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -13,9 +15,11 @@ import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -45,6 +49,8 @@ public class MainActivity extends Activity {
     private LocationManager mLocationManager;
     private MaoGpsListener maoGpsListener;
 
+    private Context activityContext;
+
     private boolean needOutput;
     private Switch outputSwitch;
     private boolean useApiConvert;
@@ -67,14 +73,24 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        this.activityContext = this;
+
         this.logView = ((TextView) findViewById(R.id.logText));
-        this.logView.setOnClickListener(new View.OnClickListener() {
+        this.logView.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
                 logView.setText(R.string.Mao_NMEA_TitleView);
             }
         });
         this.nmeaView = ((TextView) findViewById(R.id.nmeaText));
+        this.nmeaView.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ClipboardManager clipboardManager = (ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+                clipboardManager.setPrimaryClip(ClipData.newPlainText("Mao_NMEA_Server", nmeaView.getText()));
+                Toast.makeText(activityContext, "Copy Mao NMEA messages to clipboard", Toast.LENGTH_SHORT).show();
+            }
+        });
         this.outputSwitch = ((Switch) findViewById(R.id.OutputSwitch));
         this.outputSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -236,7 +252,7 @@ public class MainActivity extends Activity {
         if (!needOutput)
             return;
 
-        if (nmeaLogQueue.size() >= 10)
+        if (nmeaLogQueue.size() >= 15)
             nmeaLogQueue.remove(0);
         nmeaLogQueue.add(Integer.toString(++nmeaCount) + "  " + nmea + "\n\n");
 

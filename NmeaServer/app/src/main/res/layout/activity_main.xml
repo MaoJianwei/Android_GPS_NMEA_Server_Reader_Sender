@@ -21,7 +21,8 @@
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
         android:layout_below="@+id/logText"
-        android:text="@string/Mao_NMEA_TextView" />
+        android:text="@string/Mao_NMEA_TextView"
+        android:clickable="true" />
 
     <TextView
         android:text="@string/Mao_NMEA_TitleView"

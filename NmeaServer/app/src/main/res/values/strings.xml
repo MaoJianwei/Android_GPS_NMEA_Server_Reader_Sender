@@ -1,6 +1,6 @@
 <resources>
 
-    <string name="app_name">GPS NMEA Server</string>
+    <string name="app_name">Mao GPS NMEA Server</string>
     <string name="mao_name">Mao Jianwei</string>
     <string name="Mao_NMEA_TitleView">Switch 1:\nText Output: Disable / Enable\nSwitch 2:\nChoose Source: Silicon Original / API Convert</string>
     <string name="Mao_NMEA_TextView">API Convert / Silicon Original NMEA Message</string>
