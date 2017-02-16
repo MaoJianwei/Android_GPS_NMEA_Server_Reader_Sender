@@ -1,14 +1,10 @@
-package win.maojianwei.nmea.nmeaserver;
+package maojianwei.nmea.server;
 
-import android.content.pm.PackageManager;
 import android.location.GpsSatellite;
 import android.location.Location;
-import android.location.LocationManager;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
@@ -18,6 +14,25 @@ import java.util.TimeZone;
  */
 
 public class MaoNmeaTools {
+
+    public static final String PERMISSION_ACCESS_FINE_LOCATION = "android.permission.ACCESS_FINE_LOCATION";
+    public static final String ACTIVITY_LOCATION_SOURCE_SETTINGS = "android.settings.LOCATION_SOURCE_SETTINGS";
+
+    public static final String DoubleBlankspace = "  ";
+    public static final String SingleEnter = "\n";
+    public static final String DoubleEnter = "\n\n";
+
+    public static final String EnableGpsDevice = "enableGpsDevice: ";
+    public static final String MaoNmeaSendMessage_Close = "MaoNmeaSendMessage close: ";
+    public static final String MaoNmeaSendMessage_write_flush = "MaoNmeaSendMessage write/flush: ";
+    public static final String GenerateNmeaWithBeidou = "generateNmeaWithBeidou: ";
+    public static final String DestroyNmeaServer = "destroyNmeaServer: ";
+    public static final String CreateNmeaServer = "createNmeaServer: ";
+    public static final String CheckGPSLocationProviderEnable = "checkGPSLocationProviderEnable: ";
+    public static final String CheckEnableGpsDevice = "checkEnableGpsDevice: ";
+    public static final String No_Permission_ACCESS_FINE_LOCATION = "not have permission ACCESS_FINE_LOCATION !!!";
+    public static final String CopyToClipboard = "Copy Mao NMEA messages to clipboard";
+    public static final String ClipboardLabel = "Mao_NMEA_Server";
 
     public static int calSatelliteUseInFix(List<GpsSatellite> satellites) {
         int count = 0;

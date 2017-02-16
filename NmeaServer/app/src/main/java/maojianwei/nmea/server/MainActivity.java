@@ -1,4 +1,4 @@
-package win.maojianwei.nmea.nmeaserver;
+package maojianwei.nmea.server;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
@@ -32,18 +32,35 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import win.maojianwei.nmea.nmeaserver.R;
+
 import static android.location.GpsStatus.GPS_EVENT_SATELLITE_STATUS;
-import static win.maojianwei.nmea.nmeaserver.MaoNmeaTools.calSatelliteUseInFix;
-import static win.maojianwei.nmea.nmeaserver.MaoNmeaTools.convertNmeaGGA;
-import static win.maojianwei.nmea.nmeaserver.MaoNmeaTools.convertNmeaGLL;
-import static win.maojianwei.nmea.nmeaserver.MaoNmeaTools.convertNmeaGSA;
-import static win.maojianwei.nmea.nmeaserver.MaoNmeaTools.convertNmeaGSV;
-import static win.maojianwei.nmea.nmeaserver.MaoNmeaTools.convertNmeaRMC;
-import static win.maojianwei.nmea.nmeaserver.MaoNmeaTools.convertNmeaVTG;
+import static maojianwei.nmea.server.MaoNmeaTools.ACTIVITY_LOCATION_SOURCE_SETTINGS;
+import static maojianwei.nmea.server.MaoNmeaTools.CheckEnableGpsDevice;
+import static maojianwei.nmea.server.MaoNmeaTools.CheckGPSLocationProviderEnable;
+import static maojianwei.nmea.server.MaoNmeaTools.ClipboardLabel;
+import static maojianwei.nmea.server.MaoNmeaTools.CopyToClipboard;
+import static maojianwei.nmea.server.MaoNmeaTools.CreateNmeaServer;
+import static maojianwei.nmea.server.MaoNmeaTools.DestroyNmeaServer;
+import static maojianwei.nmea.server.MaoNmeaTools.DoubleBlankspace;
+import static maojianwei.nmea.server.MaoNmeaTools.DoubleEnter;
+import static maojianwei.nmea.server.MaoNmeaTools.EnableGpsDevice;
+import static maojianwei.nmea.server.MaoNmeaTools.GenerateNmeaWithBeidou;
+import static maojianwei.nmea.server.MaoNmeaTools.MaoNmeaSendMessage_Close;
+import static maojianwei.nmea.server.MaoNmeaTools.MaoNmeaSendMessage_write_flush;
+import static maojianwei.nmea.server.MaoNmeaTools.No_Permission_ACCESS_FINE_LOCATION;
+import static maojianwei.nmea.server.MaoNmeaTools.PERMISSION_ACCESS_FINE_LOCATION;
+import static maojianwei.nmea.server.MaoNmeaTools.SingleEnter;
+import static maojianwei.nmea.server.MaoNmeaTools.calSatelliteUseInFix;
+import static maojianwei.nmea.server.MaoNmeaTools.convertNmeaGGA;
+import static maojianwei.nmea.server.MaoNmeaTools.convertNmeaGLL;
+import static maojianwei.nmea.server.MaoNmeaTools.convertNmeaGSA;
+import static maojianwei.nmea.server.MaoNmeaTools.convertNmeaGSV;
+import static maojianwei.nmea.server.MaoNmeaTools.convertNmeaRMC;
+import static maojianwei.nmea.server.MaoNmeaTools.convertNmeaVTG;
 
 public class MainActivity extends Activity {
 
-    private static final String PERMISSION_ACCESS_FINE_LOCATION = "android.permission.ACCESS_FINE_LOCATION";
     private static final int GPS_PORT = 8888;
 
     private LocationManager mLocationManager;
@@ -87,8 +104,8 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View v) {
                 ClipboardManager clipboardManager = (ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
-                clipboardManager.setPrimaryClip(ClipData.newPlainText("Mao_NMEA_Server", nmeaView.getText()));
-                Toast.makeText(activityContext, "Copy Mao NMEA messages to clipboard", Toast.LENGTH_SHORT).show();
+                clipboardManager.setPrimaryClip(ClipData.newPlainText(ClipboardLabel, nmeaView.getText()));
+                Toast.makeText(activityContext, CopyToClipboard, Toast.LENGTH_SHORT).show();
             }
         });
         this.outputSwitch = ((Switch) findViewById(R.id.OutputSwitch));
@@ -124,7 +141,7 @@ public class MainActivity extends Activity {
                     this.mLocationManager.addGpsStatusListener(this.maoGpsListener);
                     this.mLocationManager.addNmeaListener(this.maoGpsListener);
                 } else {
-                    programLog("not have permission ACCESS_FINE_LOCATION !!!");
+                    programLog(No_Permission_ACCESS_FINE_LOCATION);
                 }
             }
         }
@@ -134,9 +151,9 @@ public class MainActivity extends Activity {
         if (this.mLocationManager != null) {
             if (!checkGPSLocationProviderEnable()) {
                 try {
-                    startActivity(new Intent("android.settings.LOCATION_SOURCE_SETTINGS"));
+                    startActivity(new Intent(ACTIVITY_LOCATION_SOURCE_SETTINGS));
                 } catch (Exception localException) {
-                    programLog("checkEnableGpsDevice, exception:" + localException.getMessage());
+                    programLog(CheckEnableGpsDevice + localException.getMessage());
                 }
             } else {
                 requestGpsMessage();
@@ -149,7 +166,7 @@ public class MainActivity extends Activity {
             try {
                 return this.mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
             } catch (Exception paramString) {
-                programLog("checkGPSLocationProviderEnable, exception:" + paramString.getMessage());
+                programLog(CheckGPSLocationProviderEnable + paramString.getMessage());
             }
         }
         return false;
@@ -172,7 +189,7 @@ public class MainActivity extends Activity {
             server = new ServerSocket(GPS_PORT);
             threadPool.submit(new MaoNmeaServer());
         } catch (IOException ioe) {
-            programLog("createNmeaServer: " + ioe.getMessage());
+            programLog(CreateNmeaServer + ioe.getMessage());
         }
     }
 
@@ -205,14 +222,14 @@ public class MainActivity extends Activity {
         try {
             server.close();
         } catch (IOException ioe) {
-            programLog("destroyNmeaServer1: " + ioe.getMessage());
+            programLog(DestroyNmeaServer + ioe.getMessage());
         }
 
         for (Socket c : clients) {
             try {
                 c.close();
             } catch (IOException ioe) {
-                programLog("destroyNmeaServer2: " + ioe.getMessage());
+                programLog(DestroyNmeaServer + ioe.getMessage());
             }
         }
         clients.clear();
@@ -221,7 +238,7 @@ public class MainActivity extends Activity {
         try {
             threadPool.awaitTermination(3, TimeUnit.SECONDS);
         } catch (InterruptedException ie) {
-            programLog("destroyNmeaServer: " + ie.getMessage());
+            programLog(DestroyNmeaServer + ie.getMessage());
         }
 
         server = null;
@@ -236,7 +253,7 @@ public class MainActivity extends Activity {
 
         if (logQueue.size() >= 2)
             logQueue.remove(0);
-        logQueue.add(Integer.toString(++logCount) + "  " + paramCharSequence + "\n");
+        logQueue.add(Integer.toString(++logCount) + DoubleBlankspace + paramCharSequence + SingleEnter);
 
         StringBuilder temp = new StringBuilder();
         for (String msg : logQueue) {
@@ -254,7 +271,7 @@ public class MainActivity extends Activity {
 
         if (nmeaLogQueue.size() >= 15)
             nmeaLogQueue.remove(0);
-        nmeaLogQueue.add(Integer.toString(++nmeaCount) + "  " + nmea + "\n\n");
+        nmeaLogQueue.add(Integer.toString(++nmeaCount) + DoubleBlankspace + nmea + DoubleEnter);
 
         StringBuilder temp = new StringBuilder();
         for (String msg : nmeaLogQueue) {
@@ -270,19 +287,15 @@ public class MainActivity extends Activity {
     private void generateNmeaWithBeidou() {
 
         if (PackageManager.PERMISSION_GRANTED != checkCallingOrSelfPermission(PERMISSION_ACCESS_FINE_LOCATION)) {
-            programLog("generateNmeaWithBeidou: not have permission ACCESS_FINE_LOCATION !!!");
+            programLog(GenerateNmeaWithBeidou + No_Permission_ACCESS_FINE_LOCATION);
             return;
         }
 
 
-        Iterator gi = this.mLocationManager.getGpsStatus(null).getSatellites().iterator();
-        if (gi == null) {
-            programLog("generateNmeaWithBeidou: GPS device is not ready!");
-            return;
-        }
+        Iterator satelliteIterator = this.mLocationManager.getGpsStatus(null).getSatellites().iterator();
         List<GpsSatellite> satellites = new ArrayList<>();
-        while (gi.hasNext())
-            satellites.add((GpsSatellite) gi.next());
+        while (satelliteIterator.hasNext())
+            satellites.add((GpsSatellite) satelliteIterator.next());
 
         String temp;
         temp = convertNmeaGSA(satellites);
@@ -346,13 +359,13 @@ public class MainActivity extends Activity {
                     temp.write(0x0A);
                     temp.flush();
                 } catch (IOException ioe) {
-                    programLog("MaoNmeaSendMessage run: " + ioe.getMessage());
+                    programLog(MaoNmeaSendMessage_write_flush + ioe.getMessage());
                     clients.remove(c);
 
                     try {
                         c.close();
                     } catch (IOException e) {
-                        programLog("MaoNmeaSendMessage try: " + e.getMessage());
+                        programLog(MaoNmeaSendMessage_Close + e.getMessage());
                     }
                 }
             }
@@ -385,9 +398,9 @@ public class MainActivity extends Activity {
         public void onProviderDisabled(String provider) {
             if (provider.equals(LocationManager.GPS_PROVIDER)) {
                 try {
-                    startActivity(new Intent("android.settings.LOCATION_SOURCE_SETTINGS"));
+                    startActivity(new Intent(ACTIVITY_LOCATION_SOURCE_SETTINGS));
                 } catch (Exception localException) {
-                    programLog("checkEnableGpsDevice, exception:" + localException.getMessage());
+                    programLog(EnableGpsDevice + localException.getMessage());
                 }
             }
         }

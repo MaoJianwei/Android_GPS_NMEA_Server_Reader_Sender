@@ -4,7 +4,7 @@ android {
     compileSdkVersion 23
     buildToolsVersion "24.0.2"
     defaultConfig {
-        applicationId "win.maojianwei.nmea.nmeaserver"
+        applicationId 'maojianwei.nmea.server'
         minSdkVersion 16
         targetSdkVersion 23
         versionCode 1
