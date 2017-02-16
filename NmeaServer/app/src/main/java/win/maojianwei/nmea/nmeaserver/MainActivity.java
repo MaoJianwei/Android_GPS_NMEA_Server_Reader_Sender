@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.location.GpsSatellite;
 import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
@@ -19,8 +20,13 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -60,6 +66,20 @@ public class MainActivity extends Activity {
             }
         });
         this.needOutput = true;
+
+
+        //String nmea = "$GPGGA,063006,1959.784173,N,11019.531628,E,2,05,1.6,13.0,M,-9.0,M,,";//*6F
+        //CharSequence crc = calcNmeaCrc(nmea);
+
+        //String time =FormatUTCDate("HHmmss.SSS", new Date());
+
+//        String m1 = FormatLatLon("%02d%08.5f,%c,", 'S', 'N', 19.996536);
+//        String m2 = FormatLatLon("%02d%08.5f,%c,", 'S', 'N', -19.996536);
+//        String m3 = FormatLatLon("%02d%08.5f,%c,", 'S', 'N', 0);
+//        String m4 = FormatLatLon("%03d%08.5f,%c,", 'W', 'E', 110.325431);
+//        String m5 = FormatLatLon("%03d%08.5f,%c,", 'W', 'E', -110.325431);
+//        String m6 = FormatLatLon("%03d%08.5f,%c,", 'W', 'E', 0);
+
 
         onCreateLocation();
         checkLocationProviders();
@@ -192,16 +212,17 @@ public class MainActivity extends Activity {
 
     private int logCount = 0;
     private List<String> logQueue = new ArrayList<>();
+
     public void programLog(CharSequence paramCharSequence) {
-        if(!needOutput)
+        if (!needOutput)
             return;
 
-        if(logQueue.size() >= 3)
+        if (logQueue.size() >= 3)
             logQueue.remove(0);
         logQueue.add(Integer.toString(++logCount) + "  " + paramCharSequence + "\n");
 
         StringBuilder temp = new StringBuilder();
-        for(String msg : logQueue){
+        for (String msg : logQueue) {
             temp.append(msg);
         }
 
@@ -212,16 +233,17 @@ public class MainActivity extends Activity {
 
     private int nmeaCount = 0;
     private List<String> nmeaLogQueue = new ArrayList<>();
+
     public void nmeaLog(String nmea) {
-        if(!needOutput)
+        if (!needOutput)
             return;
 
-        if(nmeaLogQueue.size() >= 10)
+        if (nmeaLogQueue.size() >= 10)
             nmeaLogQueue.remove(0);
         nmeaLogQueue.add(Integer.toString(++nmeaCount) + "  " + nmea + "\n\n");
 
         StringBuilder temp = new StringBuilder();
-        for(String msg : nmeaLogQueue){
+        for (String msg : nmeaLogQueue) {
             temp.append(msg);
         }
 
@@ -278,21 +300,242 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void generateNmeaWithBeidou() {
+
+        if (PackageManager.PERMISSION_GRANTED != checkCallingOrSelfPermission(PERMISSION_ACCESS_FINE_LOCATION)) {
+            programLog("generateNmeaWithBeidou: not have permission ACCESS_FINE_LOCATION !!!");
+            return;
+        }
+
+
+        Iterator gi = this.mLocationManager.getGpsStatus(null).getSatellites().iterator();
+        if(gi == null) {
+            programLog("generateNmeaWithBeidou: GPS device is not ready!");
+            return;
+        }
+        List<GpsSatellite> satellites = new ArrayList<>();
+        while(gi.hasNext())
+            satellites.add((GpsSatellite) gi.next());
+
+        String temp;
+        temp = convertNmeaGSA(satellites);
+        commitNmeaMessage(temp);
+
+        String [] tempList = convertNmeaGSV(satellites);
+        for(String gsv : tempList)
+            commitNmeaMessage(gsv);
+
+
+        Location location = this.mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        if(location != null) {
+            temp = convertNmeaGGA(location, calSatelliteUseInFix(satellites));
+            commitNmeaMessage(temp);
+            temp = convertNmeaGLL(location);
+            commitNmeaMessage(temp);
+            temp = convertNmeaRMC(location);
+            commitNmeaMessage(temp);
+            temp = convertNmeaVTG(location);
+            commitNmeaMessage(temp);
+        }
+    }
+    private int calSatelliteUseInFix(List<GpsSatellite> satellites){
+        int count = 0;
+        for(GpsSatellite s : satellites) {
+            if ((s.getPrn() > 0) && s.usedInFix())
+                count++;
+        }
+        return count;
+    }
+
+    private String convertNmeaGGA(Location paramLocation, int paramInt) {
+        StringBuilder localStringBuilder = new StringBuilder();
+        localStringBuilder.append("$GPGGA,");
+        localStringBuilder.append(FormatUTCDate("HHmmss.SSS", new Date(paramLocation.getTime())));
+        localStringBuilder.append(",");
+        localStringBuilder.append(FormatLatLon("%02d%08.5f,%c,", 'S', 'N', paramLocation.getLatitude()));
+        localStringBuilder.append(FormatLatLon("%03d%08.5f,%c,", 'W', 'E', paramLocation.getLongitude()));
+
+        localStringBuilder.append(String.format(Locale.getDefault(), "1,%02d,,", paramInt));
+        if (paramLocation.hasAltitude()) {
+            localStringBuilder.append(String.format(Locale.getDefault(), "%.1f", paramLocation.getAltitude()));
+        }
+        localStringBuilder.append(",M,,M,,");
+        localStringBuilder.append(calcNmeaCrc(localStringBuilder));
+        return localStringBuilder.toString();
+    }
+
+
+    private String convertNmeaGLL(Location paramLocation) {
+        StringBuilder localStringBuilder = new StringBuilder();
+        localStringBuilder.append("$GPGLL,");
+        localStringBuilder.append(FormatLatLon("%02d%08.5f,%c,", 'S', 'N', paramLocation.getLatitude()));
+        localStringBuilder.append(FormatLatLon("%03d%08.5f,%c,", 'W', 'E', paramLocation.getLongitude()));
+        localStringBuilder.append(FormatUTCDate("HHmmss.SSS", new Date(paramLocation.getTime())));
+        localStringBuilder.append(",A,A");
+        localStringBuilder.append(calcNmeaCrc(localStringBuilder));
+        return localStringBuilder.toString();
+    }
+
+    private String convertNmeaGSA(List<GpsSatellite> satellites)
+    {
+        StringBuilder localStringBuilder = new StringBuilder();
+        localStringBuilder.append("$GPGSA,,,");
+
+        int satelliteChannelCount = 12;
+        for(GpsSatellite s : satellites){
+            if ((s.getPrn() > 0) && s.usedInFix()) {
+                localStringBuilder.append(String.format(Locale.getDefault(), "%02d,", s.getPrn()));
+                satelliteChannelCount--;
+            }
+        }
+        while(satelliteChannelCount-- > 0){
+            localStringBuilder.append(",");
+        }
+
+        localStringBuilder.append(",,,");
+        localStringBuilder.append(calcNmeaCrc(localStringBuilder));
+        return localStringBuilder.toString();
+    }
+
+    private String[] convertNmeaGSV(List<GpsSatellite> satellites)//, int paramInt)
+    {
+        StringBuilder localStringBuilder = new StringBuilder();
+
+        // is satellite in seen ?
+        int seenCount = satellites.size();
+
+        if(seenCount<=0){
+            localStringBuilder.append("$GPGSV,1,1,00");
+            localStringBuilder.append(calcNmeaCrc(localStringBuilder));
+            return new String[] { localStringBuilder.toString() };
+        }
+
+        int msgRows = (seenCount + 3) / 4;
+        String[] arrayOfString = new String[msgRows];
+
+        //int prn, elevation, azimuth, snr;
+        for(int i = 0; i < msgRows; i++){
+            localStringBuilder.setLength(0);
+            localStringBuilder.append(String.format(Locale.getDefault(), "$GPGSV,%d,%d,%02d", msgRows, i + 1, seenCount));
+
+            for(int j = 0; j < 4; j++){
+                if(i * 4 + j >= satellites.size())
+                    break;
+
+                GpsSatellite g = satellites.get(i * 4 + j);
+                //prn = g.getPrn();
+                //elevation = (int)g.getElevation();
+                //azimuth = (int)g.getAzimuth();
+                //snr = (int)g.getSnr();
+
+                if((int)g.getSnr() == 0){
+                    localStringBuilder.append(String.format(Locale.getDefault(), ",%02d,%02d,%03d,",
+                            g.getPrn(), (int)g.getElevation(), (int)g.getAzimuth()));
+                }
+                else {
+                    localStringBuilder.append(String.format(Locale.getDefault(), ",%02d,%02d,%03d,%02d",
+                            g.getPrn(), (int) g.getElevation(), (int) g.getAzimuth(), (int) g.getSnr()));
+                }
+            }
+
+            localStringBuilder.append(calcNmeaCrc(localStringBuilder));
+            arrayOfString[i] = localStringBuilder.toString();
+        }
+
+        return arrayOfString;
+    }
+
+    private String convertNmeaRMC(Location paramLocation)
+    {
+        StringBuilder localStringBuilder = new StringBuilder();
+        localStringBuilder.append("$GPRMC,");
+        localStringBuilder.append(FormatUTCDate("HHmmss.SSS", new Date(paramLocation.getTime())));
+        localStringBuilder.append(",A,");
+        localStringBuilder.append(FormatLatLon("%02d%08.5f,%c,", 'S', 'N', paramLocation.getLatitude()));
+        localStringBuilder.append(FormatLatLon("%03d%08.5f,%c,", 'W', 'E', paramLocation.getLongitude()));
+        if (paramLocation.hasSpeed()) {
+            localStringBuilder.append(String.format(Locale.getDefault(), "%5.3f", paramLocation.getSpeed() / 0.5395720670123687D));
+        }
+        localStringBuilder.append(",");
+        if (paramLocation.hasBearing()) {
+            localStringBuilder.append(String.format(Locale.getDefault(), "%1.0f", (double) paramLocation.getBearing()));
+        }
+        localStringBuilder.append(",");
+        localStringBuilder.append(FormatUTCDate("ddMMyy", new Date(paramLocation.getTime())));
+        localStringBuilder.append(",,,A");
+        localStringBuilder.append(calcNmeaCrc(localStringBuilder));
+        return localStringBuilder.toString();
+    }
+
+    private String convertNmeaVTG(Location paramLocation)
+    {
+        StringBuilder localStringBuilder = new StringBuilder();
+        localStringBuilder.append("$GPVTG,");
+        if (paramLocation.hasBearing()) {
+            localStringBuilder.append(String.format(Locale.getDefault(), "%1.0f", paramLocation.getBearing()));
+        }
+        localStringBuilder.append(",T,,M,");
+        if (paramLocation.hasSpeed())
+        {
+            localStringBuilder.append(String.format(Locale.getDefault(), "%5.3f,N,%5.3f,K,",
+                    paramLocation.getSpeed() / 0.5395720670123687D, 3.6D * paramLocation.getSpeed()));
+        }else{
+            localStringBuilder.append(",,,,");
+        }
+        localStringBuilder.append(calcNmeaCrc(localStringBuilder));
+        return localStringBuilder.toString();
+    }
+
+    private String FormatUTCDate(String paramString, Date paramDate) {
+        SimpleDateFormat dateString = new SimpleDateFormat(paramString, Locale.getDefault());
+        dateString.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return dateString.format(paramDate);
+    }
+
+    private static String FormatLatLon(String paramString, char paramChar1, char paramChar2, double paramDouble) {
+        double d1, d2;
+        int i;
+        if (paramDouble < 0.0D) {
+            d1 = -paramDouble;
+            i = (int) d1;
+            d2 = i;
+            paramChar2 = paramChar1;
+        } else {
+            d1 = paramDouble;
+            i = (int) d1;
+            d2 = i;
+        }
+        return String.format(paramString, i, 60.0D * (d1 - d2), paramChar2);
+    }
+
+    private CharSequence calcNmeaCrc(CharSequence paramCharSequence) {
+        int i = 0;
+        for (int k = 1; k < paramCharSequence.length(); k++) {
+            i = (byte) (paramCharSequence.charAt(k) ^ i);
+        }
+        //return String.format("*%02X\r\n", (byte) i);
+        return String.format("*%02X\r", (byte) i);
+    }
+
+
+    private void commitNmeaMessage(String nmea){
+        nmeaLog(nmea);
+        threadPool.submit(new MaoNmeaSendMessage(nmea));
+    }
+
     private class MaoGpsListener implements GpsStatus.Listener, GpsStatus.NmeaListener, LocationListener {
 
         //GpsStatus.NmeaListener
         @Override
         public void onNmeaReceived(long timestamp, String nmea) {
             //--- Comment this, for convert NMEA debug ---
-            nmeaLog(nmea);
-            threadPool.submit(new MaoNmeaSendMessage(nmea));
+            commitNmeaMessage(nmea);
         }
 
         //GpsStatus.Listener
-        public void onGpsStatusChanged(int event){
-            if(event == GPS_EVENT_SATELLITE_STATUS){
-                //TODO
-                //generateNmeaWithBeidou();
+        public void onGpsStatusChanged(int event) {
+            if (event == GPS_EVENT_SATELLITE_STATUS) {
+                generateNmeaWithBeidou();
             }
         }
 
@@ -310,8 +553,7 @@ public class MainActivity extends Activity {
 
         @Override
         public void onLocationChanged(Location location) {
-            //TODO
-            //generateNmeaWithBeidou();
+            generateNmeaWithBeidou();
         }
 
         @Override
