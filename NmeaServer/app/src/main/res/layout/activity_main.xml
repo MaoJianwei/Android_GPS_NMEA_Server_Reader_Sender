@@ -12,7 +12,6 @@
     tools:context="win.maojianwei.nmea.nmeaserver.MainActivity">
 
     <TextView
-        android:text="NMEA Message"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:id="@+id/nmeaText"
@@ -21,30 +20,62 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_below="@+id/logText" />
+        android:layout_below="@+id/logText"
+        android:text="@string/Mao_NMEA_TextView" />
+
+    <TextView
+        android:text="@string/Mao_NMEA_TitleView"
+        android:layout_width="wrap_content"
+        android:id="@+id/logText"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/maoText"
+        android:layout_toStartOf="@+id/OutputSwitch"
+        android:layout_toLeftOf="@+id/OutputSwitch"
+        android:layout_height="80dp"
+        android:textStyle="normal|bold" />
+
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:id="@+id/OutputSwitch"
+        android:showText="false"
+        android:splitTrack="false"
+        android:switchMinWidth="60dip"
+        android:checked="true"
+        tools:targetApi="lollipop"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true" />
+
+    <Switch
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:id="@+id/OriginSwitch"
+        android:switchMinWidth="60dip"
+        android:showText="false"
+        android:splitTrack="false"
+        android:checked="true"
+        tools:ignore="RtlHardcoded"
+        tools:targetApi="lollipop"
+        android:layout_below="@+id/OutputSwitch"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_above="@+id/nmeaText"
+        android:layout_toRightOf="@+id/logText"
+        android:layout_toEndOf="@+id/logText" />
 
     <TextView
         android:text="@string/mao_name"
         android:layout_width="wrap_content"
-        android:id="@+id/logText"
+        android:id="@+id/maoText"
+        android:textAlignment="center"
         android:layout_alignParentTop="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentStart="true"
-        android:layout_height="100dp"
+        android:layout_toLeftOf="@+id/OutputSwitch"
         android:layout_toStartOf="@+id/OutputSwitch"
-        android:layout_toLeftOf="@+id/OutputSwitch" />
-
-    <Switch
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/OutputSwitch"
-        android:layout_alignParentRight="true"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentTop="true"
-        android:layout_above="@+id/nmeaText"
-        android:showText="false"
-        android:splitTrack="false"
-        android:switchMinWidth="60dip"
-        android:checked="true" />
+        android:layout_height="20dp"
+        android:textStyle="normal|bold" />
 
 </RelativeLayout>
