@@ -9,7 +9,7 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     android:paddingBottom="@dimen/activity_horizontal_margin"
-    tools:context="win.maojianwei.nmea.nmeaserver.MainActivity">
+    tools:context="maojianwei.nmea.server.MainActivity">
 
     <TextView
         android:layout_width="wrap_content"
